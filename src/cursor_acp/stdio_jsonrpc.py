@@ -18,7 +18,14 @@ from typing import Any
 
 from cursor_acp._meta import __version__ as _package_version
 from cursor_acp.env import build_cursor_acp_subprocess_environ
-from cursor_acp.exceptions import validate_explicit_api_key
+from cursor_acp.exceptions import (
+    CursorAcpCliNotFoundError,
+    CursorAcpProtocolError,
+    CursorAcpSpawnError,
+    CursorAcpTimeoutError,
+    json_rpc_failure,
+    validate_explicit_api_key,
+)
 
 log = logging.getLogger("cursor_acp.stdio_jsonrpc")
 
@@ -93,6 +100,7 @@ class CursorCliAcpStdioJsonRpc:
         self._stderr_task: asyncio.Task[None] | None = None
         self._next_jsonrpc_id = 1
         self._pending: dict[int, asyncio.Future[Any]] = {}
+        self._pending_methods: dict[int, str] = {}
         self._write_lock = asyncio.Lock()
         self._start_lock = asyncio.Lock()
 
@@ -126,9 +134,9 @@ class CursorCliAcpStdioJsonRpc:
 
             argv = self._build_argv()
             if not shutil.which(argv[0]):
-                raise RuntimeError(
+                raise CursorAcpCliNotFoundError(
                     "Cursor CLI binary not found on PATH "
-                    "(expected `agent` per Cursor CLI ACP documentation)."
+                    "(see Cursor CLI ACP documentation for the expected executable)."
                 )
 
             env = build_cursor_acp_subprocess_environ(
@@ -138,17 +146,23 @@ class CursorCliAcpStdioJsonRpc:
             )
             cwd_s = str(self._cwd.resolve())
 
-            self._process = await asyncio.create_subprocess_exec(
-                *argv,
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=self._stderr,
-                cwd=cwd_s,
-                env=env,
-                limit=1024 * 1024,
-            )
+            try:
+                self._process = await asyncio.create_subprocess_exec(
+                    *argv,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=self._stderr,
+                    cwd=cwd_s,
+                    env=env,
+                    limit=1024 * 1024,
+                )
+            except (OSError, ValueError) as e:
+                raise CursorAcpSpawnError(
+                    "failed to spawn Cursor CLI ACP subprocess"
+                ) from e
             self._next_jsonrpc_id = 1
             self._pending.clear()
+            self._pending_methods.clear()
 
             self._reader_task = asyncio.create_task(self._reader_loop())
             if self._stderr == asyncio.subprocess.PIPE:
@@ -203,7 +217,7 @@ class CursorCliAcpStdioJsonRpc:
         timeout: float | None = None,
     ) -> Any:
         if self._process is None or self._process.stdin is None:
-            raise RuntimeError("ACP subprocess is not running")
+            raise CursorAcpProtocolError("ACP subprocess is not running")
 
         async with self._write_lock:
             req_id = self._next_jsonrpc_id
@@ -211,6 +225,7 @@ class CursorCliAcpStdioJsonRpc:
             loop = asyncio.get_running_loop()
             fut: asyncio.Future[Any] = loop.create_future()
             self._pending[req_id] = fut
+            self._pending_methods[req_id] = method
             payload: dict[str, Any] = {
                 "jsonrpc": JSONRPC_VERSION,
                 "id": req_id,
@@ -226,20 +241,22 @@ class CursorCliAcpStdioJsonRpc:
             if timeout is not None:
                 return await asyncio.wait_for(fut, timeout=timeout)
             return await fut
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as e:
             self._pending.pop(req_id, None)
+            self._pending_methods.pop(req_id, None)
             if not fut.done():
                 fut.cancel()
-            raise
+            raise CursorAcpTimeoutError("request timed out") from e
         except asyncio.CancelledError:
             self._pending.pop(req_id, None)
+            self._pending_methods.pop(req_id, None)
             if not fut.done():
                 fut.cancel()
             raise
 
     async def notify(self, method: str, params: dict[str, Any] | None = None) -> None:
         if self._process is None or self._process.stdin is None:
-            raise RuntimeError("ACP subprocess is not running")
+            raise CursorAcpProtocolError("ACP subprocess is not running")
         payload: dict[str, Any] = {"jsonrpc": JSONRPC_VERSION, "method": method}
         if params is not None:
             payload["params"] = params
@@ -329,17 +346,17 @@ class CursorCliAcpStdioJsonRpc:
             if key is None:
                 return
             fut = self._pending.pop(key, None)
+            method_name = self._pending_methods.pop(key, "unknown")
             if fut is None:
                 return
             if "error" in msg:
                 err = msg["error"]
                 if isinstance(err, dict):
-                    em = str(err.get("message", "error"))
-                    code = err.get("code")
-                    detail = f"{em} code={code!r}"
-                    fut.set_exception(RuntimeError(detail))
+                    fut.set_exception(json_rpc_failure(method_name, err))
                 else:
-                    fut.set_exception(RuntimeError(str(err)))
+                    fut.set_exception(
+                        CursorAcpProtocolError("JSON-RPC error payload was not an object")
+                    )
             else:
                 fut.set_result(msg.get("result"))
             return
@@ -376,11 +393,14 @@ class CursorCliAcpStdioJsonRpc:
                 except Exception:
                     log.exception("message dispatch failed")
         finally:
-            await self._fail_all_pending(RuntimeError("ACP stdout closed"))
+            await self._fail_all_pending(
+                CursorAcpProtocolError("ACP stdout closed")
+            )
 
     async def _fail_all_pending(self, exc: BaseException) -> None:
         pending = list(self._pending.items())
         self._pending.clear()
+        self._pending_methods.clear()
         for _, fut in pending:
             if not fut.done():
                 try:
@@ -424,7 +444,9 @@ class CursorCliAcpStdioJsonRpc:
                     proc.kill()
                     with contextlib.suppress(ProcessLookupError):
                         await proc.wait()
-        await self._fail_all_pending(RuntimeError("ACP transport closed"))
+        await self._fail_all_pending(
+            CursorAcpProtocolError("ACP transport closed")
+        )
 
     async def __aenter__(self) -> CursorCliAcpStdioJsonRpc:
         await self.start()
