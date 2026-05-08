@@ -10,5 +10,5 @@ build/
 .pytest_cache/
 .mypy_cache/
 
-cursor-orch-output.json.env
+cursor-orch-output.json
 .env.*
