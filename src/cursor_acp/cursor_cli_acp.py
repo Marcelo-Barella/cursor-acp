@@ -3,8 +3,8 @@
 from cursor_acp.stdio_jsonrpc import (
     CURSOR_CLI_ACP_ARGV,
     CURSOR_CLI_ACP_EXECUTABLE,
-    CursorCliAcpStdioJsonRpc,
     JSONRPC_VERSION,
+    CursorCliAcpStdioJsonRpc,
     ServerRequestHandler,
 )
 

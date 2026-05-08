@@ -1,9 +1,8 @@
 """Library errors (taxonomy root)."""
 
+import asyncio
 from collections.abc import Mapping
 from typing import Any
-
-import asyncio
 
 
 class CursorAcpError(Exception):
@@ -16,7 +15,7 @@ class CursorAcpError(Exception):
 
 
 class CursorAcpApiKeyError(CursorAcpError):
-    """Non-empty Cursor API credential required (see Cursor CLI / ACP docs for env names).
+    """Non-empty Cursor API credential (see Cursor CLI / ACP docs for env names).
 
     Raised when an explicit ``api_key`` boundary value is missing or whitespace-only.
     Secrets must not appear in messages, tracebacks intentionally carry none.

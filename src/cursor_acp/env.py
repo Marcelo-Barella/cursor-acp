@@ -50,4 +50,3 @@ def build_cursor_acp_subprocess_environ(
             if lb not in parts:
                 env["PATH"] = lb + os.pathsep + path if path else lb
     return env
-

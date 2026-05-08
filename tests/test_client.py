@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 from pathlib import Path
 
@@ -10,8 +9,8 @@ import pytest
 from cursor_acp import (
     CursorAcpAuthError,
     CursorAcpCancelledError,
-    CursorAcpCliNotFoundError,
     CursorAcpClient,
+    CursorAcpCliNotFoundError,
     CursorAcpTimeoutError,
 )
 
@@ -71,9 +70,7 @@ async def test_cursor_acp_client_prompt(
     exe = tmp_path / "agent"
     exe.write_text(_FAKE_AGENT)
     exe.chmod(0o755)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
 
     client = CursorAcpClient(api_key="k", cwd=tmp_path)
     assert await client.prompt("hello") == {"stopReason": "end_turn"}
@@ -87,9 +84,7 @@ async def test_cursor_acp_client_context_manager(
     exe = tmp_path / "agent"
     exe.write_text(_FAKE_AGENT)
     exe.chmod(0o755)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
 
     async with CursorAcpClient(api_key="k", cwd=tmp_path) as client:
         assert await client.prompt("hello") == {"stopReason": "end_turn"}
@@ -99,7 +94,7 @@ async def test_cursor_acp_client_context_manager(
 async def test_cursor_acp_client_prompt_timeout(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    hang = '''#!/usr/bin/env python3
+    hang = """#!/usr/bin/env python3
 import json
 import sys
 import time
@@ -126,13 +121,11 @@ for raw in stdin:
         out = {"jsonrpc": "2.0", "id": mid, "result": {}}
     stdout.write((json.dumps(out) + chr(10)).encode())
     stdout.flush()
-'''
+"""
     exe = tmp_path / "agent"
     exe.write_text(hang)
     exe.chmod(0o755)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
 
     client = CursorAcpClient(api_key="k", cwd=tmp_path, handshake_timeout=0.2)
     with pytest.raises(CursorAcpTimeoutError):
@@ -147,9 +140,7 @@ async def test_cursor_acp_client_prompt_cancelled(
     exe = tmp_path / "agent"
     exe.write_text(_FAKE_AGENT)
     exe.chmod(0o755)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
 
     client = CursorAcpClient(api_key="k", cwd=tmp_path)
     await client.start()
@@ -209,9 +200,7 @@ async def test_authenticate_jsonrpc_error(
     exe = tmp_path / "agent"
     exe.write_text(_FAKE_FAIL_AUTH)
     exe.chmod(0o755)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
     client = CursorAcpClient(api_key="k", cwd=tmp_path)
     with pytest.raises(CursorAcpAuthError):
         await client.start()

@@ -99,9 +99,27 @@ The alternative **(B)** — fully owning `cursor-acp` behind a thin wrapper or v
 
 ```bash
 pip install -e ".[dev]"
-python3 -m pytest
 ```
 
-Integration-style tests may be gated; see `pyproject.toml` markers.
+**Lint and format:** this repository uses **[Ruff](https://docs.astral.sh/ruff/)** for lint (`E,F,I,UP,W`) and formatting.
+
+```bash
+python3 -m ruff check .
+python3 -m ruff format --check .
+```
+
+**Static typing:** checked with **[mypy](https://mypy-lang.org/)** in **strict** mode on the packaged sources under `src/`.
+
+```bash
+python3 -m mypy src
+```
+
+**Tests:** CI and local default runs omit integration tests (marked `integration`; require real Cursor CLI and credentials).
+
+```bash
+python3 -m pytest -m "not integration"
+```
+
+To include integration gates when you have `agent` on `PATH` and credentials, see `CURSOR_ACP_INTEGRATION` / `CURSOR_API_KEY` in `pyproject.toml` markers.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes.

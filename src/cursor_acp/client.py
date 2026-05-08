@@ -58,9 +58,7 @@ class CursorAcpClient:
         self._api_key = validate_explicit_api_key(api_key)
         self._cwd = Path(cwd)
         self._cli_executable = (
-            cli_executable
-            if cli_executable is not None
-            else CURSOR_CLI_ACP_EXECUTABLE
+            cli_executable if cli_executable is not None else CURSOR_CLI_ACP_EXECUTABLE
         )
         self._acp_argv = acp_argv
         self._client_name = client_name
@@ -70,9 +68,7 @@ class CursorAcpClient:
         self._stderr = stderr
         self._on_server_request = on_server_request
         self._on_notification = on_notification
-        self._mcp_servers = (
-            list(mcp_servers) if mcp_servers is not None else []
-        )
+        self._mcp_servers = list(mcp_servers) if mcp_servers is not None else []
         self._handshake_timeout = handshake_timeout
         self._default_request_timeout = request_timeout
         self._session_new_timeout = session_new_timeout

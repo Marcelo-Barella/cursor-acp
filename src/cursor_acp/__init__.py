@@ -10,8 +10,8 @@ from cursor_acp.client import CursorAcpClient, PromptResult
 from cursor_acp.cursor_cli_acp import (
     CURSOR_CLI_ACP_ARGV,
     CURSOR_CLI_ACP_EXECUTABLE,
-    CursorCliAcpStdioJsonRpc,
     JSONRPC_VERSION,
+    CursorCliAcpStdioJsonRpc,
     ServerRequestHandler,
 )
 from cursor_acp.env import (

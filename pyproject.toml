@@ -35,8 +35,10 @@ Changelog = "https://github.com/Marcelo-Barella/cursor-acp/blob/main/CHANGELOG.m
 
 [project.optional-dependencies]
 dev = [
+    "mypy>=1.11",
     "pytest>=8.2",
     "pytest-asyncio>=0.24",
+    "ruff>=0.8",
 ]
 
 [tool.pytest.ini_options]
@@ -52,3 +54,18 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 cursor_acp = ["py.typed"]
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "W"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+packages = ["cursor_acp"]
+strict = true
+warn_unused_ignores = true
+show_error_codes = true

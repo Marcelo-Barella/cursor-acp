@@ -1,0 +1,21 @@
+name: Publish to PyPI (manual stub)
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: Optional note (workflow does not upload artifacts)
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "stub: automated PyPI uploads are not enabled."
+          echo "Add trusted publishing or API token secrets here when maintainers coordinate release."

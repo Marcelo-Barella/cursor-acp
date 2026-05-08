@@ -89,9 +89,7 @@ async def test_parent_os_environ_unchanged_after_client_spawn_lifecycle(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     _install_fake_agent(tmp_path)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
     secret = "cursor_acp_unit_test_secret_7a2f9e1c4b8d0f3a"
     before = dict(os.environ)
     assert secret not in "".join(before.values())
@@ -115,9 +113,7 @@ async def test_spawn_config_double_does_not_leak_secret_to_parent_environ(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     _install_fake_agent(tmp_path)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
     secret = "cursor_acp_spawn_cfg_marker_91c4e7b2a5d8f601"
     before = dict(os.environ)
 

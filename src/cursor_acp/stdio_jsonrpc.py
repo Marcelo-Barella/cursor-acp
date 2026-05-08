@@ -89,9 +89,7 @@ class CursorCliAcpStdioJsonRpc:
         )
         self._environ_base = environ_base
         self._prepend_local_bin = prepend_local_bin_for_agent
-        self._stderr = (
-            asyncio.subprocess.DEVNULL if stderr is None else stderr
-        )
+        self._stderr = asyncio.subprocess.DEVNULL if stderr is None else stderr
         self._on_server_request = on_server_request
         self._on_notification = on_notification
 
@@ -241,7 +239,7 @@ class CursorCliAcpStdioJsonRpc:
             if timeout is not None:
                 return await asyncio.wait_for(fut, timeout=timeout)
             return await fut
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             self._pending.pop(req_id, None)
             self._pending_methods.pop(req_id, None)
             if not fut.done():
@@ -269,18 +267,14 @@ class CursorCliAcpStdioJsonRpc:
         if self._process is None or self._process.stdin is None:
             return
         line = (
-            json.dumps(
-                {"jsonrpc": JSONRPC_VERSION, "id": rpc_id, "result": result}
-            )
+            json.dumps({"jsonrpc": JSONRPC_VERSION, "id": rpc_id, "result": result})
             + "\n"
         )
         async with self._write_lock:
             self._process.stdin.write(line.encode())
             await self._process.stdin.drain()
 
-    async def _send_raw_error(
-        self, rpc_id: Any, *, code: int, message: str
-    ) -> None:
+    async def _send_raw_error(self, rpc_id: Any, *, code: int, message: str) -> None:
         if self._process is None or self._process.stdin is None:
             return
         line = (
@@ -328,9 +322,7 @@ class CursorCliAcpStdioJsonRpc:
             raise
         except BaseException:
             log.exception("server request handler failed")
-            await self._send_raw_error(
-                mid, code=-32603, message="Internal error"
-            )
+            await self._send_raw_error(mid, code=-32603, message="Internal error")
 
     async def _handle_notification(self, msg: dict[str, Any]) -> None:
         if self._on_notification is not None:
@@ -355,7 +347,9 @@ class CursorCliAcpStdioJsonRpc:
                     fut.set_exception(json_rpc_failure(method_name, err))
                 else:
                     fut.set_exception(
-                        CursorAcpProtocolError("JSON-RPC error payload was not an object")
+                        CursorAcpProtocolError(
+                            "JSON-RPC error payload was not an object",
+                        )
                     )
             else:
                 fut.set_result(msg.get("result"))
@@ -372,11 +366,13 @@ class CursorCliAcpStdioJsonRpc:
         await self._handle_server_request(msg)
 
     async def _reader_loop(self) -> None:
-        assert self._process is not None and self._process.stdout is not None
         proc = self._process
+        assert proc is not None
+        stdout = proc.stdout
+        assert stdout is not None
         try:
             while True:
-                line = await proc.stdout.readline()
+                line = await stdout.readline()
                 if not line:
                     break
                 try:
@@ -393,9 +389,7 @@ class CursorCliAcpStdioJsonRpc:
                 except Exception:
                     log.exception("message dispatch failed")
         finally:
-            await self._fail_all_pending(
-                CursorAcpProtocolError("ACP stdout closed")
-            )
+            await self._fail_all_pending(CursorAcpProtocolError("ACP stdout closed"))
 
     async def _fail_all_pending(self, exc: BaseException) -> None:
         pending = list(self._pending.items())
@@ -440,13 +434,11 @@ class CursorCliAcpStdioJsonRpc:
                 proc.terminate()
                 try:
                     await asyncio.wait_for(proc.wait(), timeout=5.0)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     proc.kill()
                     with contextlib.suppress(ProcessLookupError):
                         await proc.wait()
-        await self._fail_all_pending(
-            CursorAcpProtocolError("ACP transport closed")
-        )
+        await self._fail_all_pending(CursorAcpProtocolError("ACP transport closed"))
 
     async def __aenter__(self) -> CursorCliAcpStdioJsonRpc:
         await self.start()
@@ -454,5 +446,3 @@ class CursorCliAcpStdioJsonRpc:
 
     async def __aexit__(self, *args: object) -> None:
         await self.aclose()
-
-

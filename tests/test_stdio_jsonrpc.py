@@ -61,9 +61,7 @@ async def test_stdio_json_rpc_request_roundtrip(
     exe = tmp_path / "agent"
     exe.write_text(_FAKE_AGENT)
     exe.chmod(0o755)
-    monkeypatch.setenv(
-        "PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}"
-    )
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
 
     cli = CursorCliAcpStdioJsonRpc(api_key="test-key-nonempty", cwd=tmp_path)
     await cli.start(handshake_timeout=30.0, auto_initialize=True)
