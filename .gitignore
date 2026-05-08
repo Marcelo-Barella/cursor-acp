@@ -9,5 +9,6 @@ dist/
 build/
 .pytest_cache/
 .mypy_cache/
-.env
+
+cursor-orch-output.json.env
 .env.*
