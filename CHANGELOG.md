@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyPI distribution name is `pycursor-acp` (Python import remains `cursor_acp`). Default JSON-RPC `clientName` is `pycursor-acp`.
 - Package metadata: real authors and maintainers in `pyproject.toml`; dev optional dependency `twine`.
 
-## [0.1.0] - PLACEHOLDER_RELEASE_DATE
+## [0.1.0] - 2026-05-08
 
 ### Added
 
