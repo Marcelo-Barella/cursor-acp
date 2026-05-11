@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cursor-acp"
+version = "0.1.0"
+description = "Python library for Cursor Agent Client Protocol (ACP) integration."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "PLACEHOLDER_AUTHOR_NAME", email = "PLACEHOLDER_AUTHOR_EMAIL@example.invalid" },
+]
+maintainers = [
+    { name = "PLACEHOLDER_MAINTAINER_NAME", email = "PLACEHOLDER_MAINTAINER_EMAIL@example.invalid" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+keywords = ["cursor", "acp", "agent", "library"]
+
+[project.urls]
+Homepage = "https://github.com/Marcelo-Barella/cursor-acp"
+Repository = "https://github.com/Marcelo-Barella/cursor-acp"
+Documentation = "https://github.com/Marcelo-Barella/cursor-acp#readme"
+Changelog = "https://github.com/Marcelo-Barella/cursor-acp/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.11",
+    "pytest>=8.2",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+markers = [
+    "integration: requires real agent binary and credentials (see CURSOR_ACP_INTEGRATION)",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cursor_acp = ["py.typed"]
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "W"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+packages = ["cursor_acp"]
+strict = true
+warn_unused_ignores = true
+show_error_codes = true
