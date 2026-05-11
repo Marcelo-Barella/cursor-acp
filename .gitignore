@@ -12,4 +12,6 @@ build/
 .ruff_cache/
 
 cursor-orch-output.json
-.env.*
+.env
+
+.cursor/plans
