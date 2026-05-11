@@ -38,8 +38,20 @@ for raw in stdin:
         out = {
             "jsonrpc": PROTO,
             "id": mid,
-            "result": {"sessionId": "sess_test"},
+            "result": {
+                "sessionId": "sess_test",
+                "modes": {
+                    "currentModeId": "agent",
+                    "availableModes": [
+                        {"id": "agent", "name": "Agent"},
+                        {"id": "plan", "name": "Plan"},
+                        {"id": "ask", "name": "Ask"},
+                    ],
+                },
+            },
         }
+    elif method == "session/set_mode":
+        out = {"jsonrpc": PROTO, "id": mid, "result": {}}
     elif method == "session/prompt":
         out = {
             "jsonrpc": PROTO,

@@ -4,6 +4,9 @@ Event streaming for model output is intentionally out of scope for v1; a future
 ``stream_prompt`` (or notification subscription API) may be added without breaking
 the core ``prompt`` contract.
 
+Interaction modes are ``agent``, ``plan``, and ``ask`` per Cursor ACP docs.
+``DEBUG`` is not supported as a mode unless a future Cursor CLI exposes it.
+
 Transport and method flow follow https://cursor.com/docs/cli/acp and ACP
 ``session/prompt`` results include ``stopReason`` per the Agent Client Protocol
 prompt turn documentation.
@@ -14,7 +17,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast
 
 from cursor_acp.exceptions import (
     CursorAcpCancelledError,
@@ -33,6 +36,9 @@ class PromptResult(TypedDict):
     """JSON-RPC ``result`` object for ``session/prompt`` (ACP prompt turn)."""
 
     stopReason: str
+
+
+CursorAcpInteractionMode = Literal["agent", "plan", "ask"]
 
 
 class CursorAcpClient:
@@ -54,6 +60,7 @@ class CursorAcpClient:
         handshake_timeout: float | None = None,
         request_timeout: float | None = None,
         session_new_timeout: float | None = None,
+        mode: CursorAcpInteractionMode = "agent",
     ) -> None:
         self._api_key = validate_explicit_api_key(api_key)
         self._cwd = Path(cwd)
@@ -72,9 +79,10 @@ class CursorAcpClient:
         self._handshake_timeout = handshake_timeout
         self._default_request_timeout = request_timeout
         self._session_new_timeout = session_new_timeout
-
+        self._default_interaction_mode: CursorAcpInteractionMode = mode
         self._rpc: CursorCliAcpStdioJsonRpc | None = None
         self._session_id: str | None = None
+        self._session_interaction_mode: CursorAcpInteractionMode | None = None
 
     def _session_timeout(self) -> float | None:
         if self._session_new_timeout is not None:
@@ -96,9 +104,33 @@ class CursorAcpClient:
             on_notification=self._on_notification,
         )
 
-    async def start(self) -> None:
+    @staticmethod
+    def _modes_current_id(
+        session_new_result: dict[str, Any],
+    ) -> CursorAcpInteractionMode:
+        block = session_new_result.get("modes")
+        if isinstance(block, dict):
+            cur = block.get("currentModeId")
+            if cur in ("agent", "plan", "ask"):
+                return cast(CursorAcpInteractionMode, cur)
+        return "agent"
+
+    async def _set_mode_rpc(
+        self,
+        rpc: CursorCliAcpStdioJsonRpc,
+        session_id: str,
+        mode: CursorAcpInteractionMode,
+    ) -> None:
+        await rpc.request(
+            "session/set_mode",
+            {"sessionId": session_id, "modeId": mode},
+            timeout=self._session_timeout(),
+        )
+
+    async def start(self, *, mode: CursorAcpInteractionMode | None = None) -> None:
         if self._rpc is not None:
             return
+        effective = self._default_interaction_mode if mode is None else mode
         rpc = self._make_rpc()
         try:
             await rpc.start(
@@ -118,6 +150,10 @@ class CursorAcpClient:
             sid = raw.get("sessionId")
             if not isinstance(sid, str) or not sid:
                 raise CursorAcpProtocolError("session/new result missing sessionId")
+            current = self._modes_current_id(raw)
+            if current != effective:
+                await self._set_mode_rpc(rpc, sid, effective)
+            self._session_interaction_mode = effective
             self._rpc = rpc
             self._session_id = sid
         except BaseException:
@@ -128,6 +164,7 @@ class CursorAcpClient:
         rpc = self._rpc
         self._rpc = None
         self._session_id = None
+        self._session_interaction_mode = None
         if rpc is not None:
             await rpc.aclose()
 
@@ -135,10 +172,14 @@ class CursorAcpClient:
         self,
         text: str,
         *,
+        mode: CursorAcpInteractionMode | None = None,
         timeout: float | None = None,
     ) -> PromptResult:
         await self.start()
         assert self._rpc is not None and self._session_id is not None
+        if mode is not None and mode != self._session_interaction_mode:
+            await self._set_mode_rpc(self._rpc, self._session_id, mode)
+            self._session_interaction_mode = mode
         t = self._default_request_timeout if timeout is None else timeout
         try:
             raw = await self._rpc.request(
