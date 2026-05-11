@@ -71,7 +71,7 @@ class CursorCliAcpStdioJsonRpc:
         cwd: str | Path,
         executable: str = CURSOR_CLI_ACP_EXECUTABLE,
         acp_argv: Sequence[str] = CURSOR_CLI_ACP_ARGV,
-        client_name: str = "cursor-acp",
+        client_name: str = "pycursor-acp",
         client_version: str | None = None,
         environ_base: Mapping[str, str] | None = None,
         prepend_local_bin_for_agent: bool = True,

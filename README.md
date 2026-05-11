@@ -1,16 +1,14 @@
-# cursor-acp
+# pycursor-acp
 
 Python **async** library for driving [Cursor CLI ACP mode](https://cursor.com/docs/cli/acp) (`agent acp`): JSON-RPC 2.0 over stdio, aligned with the Agent Client Protocol.
 
 **Supported Python:** 3.11 or newer (`requires-python = ">=3.11"`).
 
-## PyPI package name status (read before `pip install`)
+## PyPI name vs other projects
 
-The intended **distribution** name for this project is **`cursor-acp`** (hyphenated, as on package indexes). The importable **Python package** is **`cursor_acp`** (underscore).
+The **distribution** on PyPI for this repo is **`pycursor-acp`**. The importable **Python package** is **`cursor_acp`** (underscore).
 
-**Naming collision:** As of 2026-05-08, the PyPI project [`cursor-acp`](https://pypi.org/project/cursor-acp/) already exists and is owned by `azgo14`, with source and metadata pointing at [`github.com/azgo14/cursor-agent`](https://github.com/azgo14/cursor-agent). That publication’s README documents a **`cursor_agent`** import and a different public API than this repository’s **`cursor_acp`** / `CursorAcpClient`.
-
-**Resolution (before claiming the index name):** Do not assume `pip install cursor-acp` installs this codebase. Until maintainers coordinate (for example upstream alignment per the implementation strategy below, a new distribution name such as a clearly distinct PyPI name, or a PEP 541 name request where applicable), install **this** project from a **Git URL** or a **local checkout**. Re-check PyPI immediately before any release, because index state can change.
+The unrelated PyPI project [`cursor-acp`](https://pypi.org/project/cursor-acp/) (import `cursor_agent`, different API) is not this library. Install with `pip install pycursor-acp` for this codebase.
 
 ## Prerequisites
 
@@ -25,14 +23,24 @@ The intended **distribution** name for this project is **`cursor-acp`** (hyphena
 
 ## Installation
 
-From this repository (recommended until the PyPI name situation is resolved):
+From PyPI:
 
 ```bash
-pip install "cursor-acp @ git+https://github.com/Marcelo-Barella/cursor-acp.git@main"
+pip install pycursor-acp
 ```
 
 ```bash
-uv pip install "cursor-acp @ git+https://github.com/Marcelo-Barella/cursor-acp.git@main"
+uv pip install pycursor-acp
+```
+
+From this repository:
+
+```bash
+pip install "pycursor-acp @ git+https://github.com/Marcelo-Barella/cursor-acp.git@main"
+```
+
+```bash
+uv pip install "pycursor-acp @ git+https://github.com/Marcelo-Barella/cursor-acp.git@main"
 ```
 
 Editable install from a local clone:
@@ -45,7 +53,7 @@ pip install -e .
 uv pip install -e .
 ```
 
-**Import vs distribution:** after installation, `import cursor_acp`. The distribution name you pass to installers is typically `cursor-acp` for a published wheel/sdist; VCS installs above use a PEP 508 URL with a local package name label (`cursor_acp` in the examples) for clarity.
+**Import vs distribution:** after installation, `import cursor_acp`. The published wheel/sdist name is `pycursor-acp`.
 
 ## Minimal async example
 
@@ -87,11 +95,9 @@ Per [Cursor CLI ACP authentication](https://cursor.com/docs/cli/acp) (verified a
 
 ## Implementation strategy
 
-**Chosen fork: (A)** — Prefer **contributing upstream** to [`github.com/azgo14/cursor-agent`](https://github.com/azgo14/cursor-agent) while keeping the **cursor-acp** product identity and contracts in this line of work: **constructor-required `api_key`**, **subprocess-isolated environment** (no parent env mutation), and **documentation / tests parity** with Cursor’s official ACP docs and verified CLI behavior.
+**Chosen fork: (A)** — Prefer **contributing upstream** to [`github.com/azgo14/cursor-agent`](https://github.com/azgo14/cursor-agent) while keeping **`pycursor-acp`** contracts: **constructor-required `api_key`**, **subprocess-isolated environment** (no parent env mutation), and **documentation / tests parity** with Cursor’s official ACP docs and verified CLI behavior.
 
-**Rationale (brief):** The protocol and transport are specified and maintained by Cursor’s CLI and ACP documentation; duplicating or vendoring the full protocol stack under a parallel PyPI name fragments fixes and security review. Upstream already publishes on PyPI under `cursor-acp` with overlapping scope; consolidating improvements reduces user confusion once naming and API alignment are sorted, while this repository can still articulate the stricter API-key boundary and env-isolation guarantees as requirements for merges.
-
-The alternative **(B)** — fully owning `cursor-acp` behind a thin wrapper or vendored protocol — is **not** selected here, because it increases long-term divergence from the de-facto reference implementation and does not by itself resolve the existing **`cursor-acp`** index conflict.
+**Rationale (brief):** The protocol and transport are specified by Cursor’s CLI and ACP documentation; this package uses a distinct PyPI name (`pycursor-acp`) so installs are unambiguous vs the separate `cursor-acp` distribution.
 
 **Upstream reference (not a shipping name):** use [`github.com/azgo14/cursor-agent`](https://github.com/azgo14/cursor-agent) as a comparison and contribution target when proposing protocol or packaging changes; it is not the import path for this tree.
 

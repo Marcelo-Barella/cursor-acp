@@ -1,6 +1,6 @@
 """Cursor ACP client library.
 
-The installable distribution is named ``cursor-acp`` (hyphenated, as used on
+The installable distribution is named ``pycursor-acp`` (hyphenated, as used on
 package indexes). The importable Python package is ``cursor_acp`` (underscore,
 valid module name).
 """
