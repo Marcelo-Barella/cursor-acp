@@ -1,0 +1,2 @@
+pycursor-acp
+python-dotenv
