@@ -6,7 +6,7 @@ Small async stdin loop around [`pycursor-acp`](https://pypi.org/project/pycursor
 
 - Python 3.11 or newer
 - Cursor `agent` CLI with ACP on your `PATH` (see the root [README.md](../README.md))
-- A `CURSOR_API_KEY` in a `.env` file beside where you run the script (loaded with `python-dotenv`; the library still receives the key explicitly and does not rely on parent-process env for the child)
+- A `CURSOR_API_KEY` value supplied either from your process environment (for example **Cursor agent secrets** / CI variables) or from a local `.env` file. `python-dotenv` is loaded with default `override=False`, so an already-set `CURSOR_API_KEY` in the environment is **not** replaced by `.env`. The library still passes the key explicitly into the `agent` child; it does not depend on the child inheriting the parent credential env entries for auth.
 
 ## Setup
 
@@ -15,16 +15,18 @@ cd pychatbot
 python3 -m pip install -r requirements.txt
 ```
 
-Create `.env`:
-
-```bash
-CURSOR_API_KEY=your_key_here
-```
+Copy [`.env.example`](.env.example) to `.env` and fill in your key, or export `CURSOR_API_KEY` in the shell / agent secret store instead.
 
 ## Run
 
 ```bash
 python3 main.py
+```
+
+or:
+
+```bash
+python3 chat.py
 ```
 
 Type a line and press Enter to send it to `session/prompt`. Commands `quit`, `exit`, or `q` stop the loop (EOF also exits).
